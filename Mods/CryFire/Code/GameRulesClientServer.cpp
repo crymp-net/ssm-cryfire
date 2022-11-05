@@ -739,14 +739,47 @@ void CGameRules::ProcessExplosionMaterialFX(const ExplosionInfo &explosionInfo)
 }
 //------------------------------------------------------------------------
 // RMI
+
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects rename spoof hack; asks lua if the newname is valid
 IMPLEMENT_RMI(CGameRules, SvRequestRename)
 {
-	CActor *pActor = GetActorByEntityId(params.entityId);
-	if (!pActor)
-		return true;
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.entityId);
 
-	RenamePlayer(pActor, params.name.c_str());
+	if (!real)
+		return RMIerror("RequestRename", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		return RMIwarning("RequestRename", chnlId, real->GetEntity()->GetName(), "actor not found!", "newname", params.name.c_str());
+	if (pretended != real) {
+		RMIdebug(1, "RequestRename", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "newname", params.name.c_str());
+		OnCheat(real, "RenameSpoof");
+		return true;
+	} else {
+		RMIdebug(8, "RequestRename", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "newname", params.name.c_str());
+	}
+
+	bool checkBefore = true; // maybe CVar
+	if (checkBefore) {
+		bool valid = true;
+		CallScriptReturn(m_script, "IsNameValid", real->GetEntity()->GetScriptTable(), params.name.c_str(), valid);
+		if (!valid) {
+			SendTextMessage(eTextMessageConsole, "$8[Rename]$9 This name is $4invalid$9 (use chat command $6!name$9 for more info)", eRMI_ToClientChannel, real->GetChannelId());
+		} else if (real->GetEntity()->GetScriptTable()->HaveValue("mute")) {
+			SendTextMessage(eTextMessageConsole, "$8[Rename]$9 Can't rename while $4muted$9", eRMI_ToClientChannel, real->GetChannelId());
+		} else {
+			std::string oldName = real->GetEntity()->GetName();
+			RenamePlayer(real, params.name.c_str());
+			Script::CallMethod("CF_NameHandler", "ResetTags", real->GetEntity()->GetScriptTable());
+			//Script::CallMethod("CF_NameHandler", "SaveChangedName", real->GetEntity()->GetScriptTable(), params.name.c_str());
+			Script::CallMethod("CF_Logger", "LogRename", oldName.c_str(), params.name.c_str(), params.name.c_str(), "console command");
+		}
+	} else {
+		const char* oldName = real->GetEntity()->GetName();
+		RenamePlayer(real, params.name.c_str());
+		CallScript(m_script, "OnUnauthorizedRename", real->GetEntity()->GetScriptTable(), oldName, params.name.c_str());
+	}
 
 	return true;
 }
@@ -779,10 +812,26 @@ IMPLEMENT_RMI(CGameRules, ClRenameEntity)
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects chat spoof hack
 IMPLEMENT_RMI(CGameRules, SvRequestChatMessage)
 {
-	SendChatMessage((EChatMessageType)params.type, params.sourceId, params.targetId, params.msg.c_str());
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.sourceId);
 
+	if (!real)
+		return RMIerror("RequestChatMessage", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		return RMIwarning("RequestChatMessage", chnlId, real->GetEntity()->GetName(), "actor not found!");
+	if (pretended != real) {
+		RMIdebug(1, "RequestChatMessage", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+		OnCheat(real, "ChatSpoof");
+		return true;
+	} else {
+		RMIdebug(8, "RequestChatMessage", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+	}
+
+	SendChatMessage((EChatMessageType)params.type, params.sourceId, params.targetId, params.msg.c_str());
 	return true;
 }
 
@@ -804,11 +853,26 @@ IMPLEMENT_RMI(CGameRules, ClForbiddenAreaWarning)
 
 
 //------------------------------------------------------------------------
-
+// !!CryFire - modded: detects radio spoof
 IMPLEMENT_RMI(CGameRules, SvRequestRadioMessage)
 {
-	SendRadioMessage(params.sourceId,params.msg);
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.sourceId);
 
+	if (!real)
+		return RMIerror("RequestRadioMessage", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		return RMIwarning("RequestRadioMessage", chnlId, real->GetEntity()->GetName(), "actor not found!");
+	if (pretended != real) {
+		RMIdebug(1, "RequestRadioMessage", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+		OnCheat(real, "RadioSpoof");
+		return true;
+	} else {
+		RMIdebug(8, "RequestRadioMessage", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+	}
+
+	SendRadioMessage(params.sourceId,params.msg);
 	return true;
 }
 
@@ -821,26 +885,52 @@ IMPLEMENT_RMI(CGameRules, ClRadioMessage)
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects team change spoof
 IMPLEMENT_RMI(CGameRules, SvRequestChangeTeam)
 {
-	CActor *pActor = GetActorByEntityId(params.entityId);
-	if (!pActor)
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.entityId);
+	char team [2];
+
+	if (!real)
+		return RMIerror("RequestChangeTeam", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		return RMIwarning("RequestChangeTeam", chnlId, real->GetEntity()->GetName(), "actor not found!", "team", itoa(params.teamId, team, 10));
+	if (pretended != real) {
+		RMIdebug(1, "RequestChangeTeam", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "team", itoa(params.teamId, team, 10));
+		OnCheat(real, "TeamChangeSpoof");
 		return true;
+	} else {
+		RMIdebug(8, "RequestChangeTeam", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "team", itoa(params.teamId, team, 10));
+	}
 
-	ChangeTeam(pActor, params.teamId);
-
+	ChangeTeam(real, params.teamId);
 	return true;
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects spectator mode change spoof
 IMPLEMENT_RMI(CGameRules, SvRequestSpectatorMode)
 {
-	CActor *pActor = GetActorByEntityId(params.entityId);
-	if (!pActor)
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.entityId);
+	char mode [2];
+
+	if (!real)
+		return RMIerror("RequestSpectatorMode", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		return RMIwarning("RequestSpectatorMode", chnlId, real->GetEntity()->GetName(), "actor not found!", "mode", itoa((int)params.mode, mode, 10));
+	if (pretended != real) {
+		RMIdebug(1, "RequestSpectatorMode", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "mode", itoa((int)params.mode, mode, 10));
+		OnCheat(real, "SpectatorModeSpoof");
 		return true;
+	} else {
+		RMIdebug(8, "RequestSpectatorMode", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "mode", itoa((int)params.mode, mode, 10));
+	}
 
-	ChangeSpectatorMode(pActor, params.mode, params.targetId, params.resetAll);
-
+	ChangeSpectatorMode(real, params.mode, params.targetId, params.resetAll);
 	return true;
 }
 
@@ -921,16 +1011,64 @@ IMPLEMENT_RMI(CGameRules, ClTextMessage)
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects simple hit spoof
 IMPLEMENT_RMI(CGameRules, SvRequestSimpleHit)
 {
-	ServerSimpleHit(params);
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.shooterId);
 
+	if (!real)
+		return RMIerror("RequestSimpleHit", chnlId, "actor related to the request channel not found");
+	if (!pretended)
+		RMIwarning("RequestSimpleHit", chnlId, real->GetEntity()->GetName(), "actor not found!");
+	else if (pretended != real) {
+		RMIdebug(1, "RequestSimpleHit", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+		g_pGame->GetGameRules()->OnCheat(real, "SimpleHitSpoof");
+		return true;
+	} else {
+		RMIdebug(8, "RequestSimpleHit", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName());
+	}
+
+	ServerSimpleHit(params);
 	return true;
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects hit spoof
 IMPLEMENT_RMI(CGameRules, SvRequestHit)
 {
+	channelId chnlId   = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = GetActorByChannelId(chnlId);
+	CActor * pretended = GetActorByEntityId(params.shooterId);
+	IEntity * target = gEnv->pEntitySystem->GetEntity(params.targetId);
+	IEntity * weapon  = gEnv->pEntitySystem->GetEntity(params.weaponId);
+
+	if (logVerbosity >= 8) {
+		CryLogAlways("[Hit RMI debug]");
+		CryLogAlways("   targetId: %p", params.targetId);
+		CryLogAlways("   shooterId: %p", params.shooterId);
+		CryLogAlways("   weaponId: %p", params.weaponId);
+		CryLogAlways("   damage: %f", params.damage);
+		CryLogAlways("   sender: %s", real ? real->GetEntity()->GetName() : "NULL");
+		CryLogAlways("   tgtName: %s", target ? target->GetName() : "NULL");
+		CryLogAlways("   shtName: %s", pretended ? pretended->GetEntity()->GetName() : "NULL");
+		CryLogAlways("   wpnName: %s", weapon ? weapon->GetName() : "NULL");
+	}
+
+	if (!real)
+		return RMIerror("RequestHit", chnlId, "actor related to the request channel not found");
+	if (!pretended) {
+		CF_Log(1, "$1[CryFire DLL] RMI RequestHit; real shtr: %s; pretended shtr: %s; tgt: %s; wpn cls: %s; dmg: %f  ", real->GetEntity()->GetName(), "actor not found!", target ? target->GetName() : "NULL", weapon ? weapon->GetName() : "NULL", params.damage);
+		return true;
+	} else if (pretended != real && (!weapon || strcmp(weapon->GetClass()->GetName(), "AACannon")!=0)) {
+		CF_Log(1, "[CryFire DLL] RMI RequestHit; real shtr: %s; pretended shtr: %s; tgt: %s; wpn cls: %s; dmg: %f", real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), target ? target->GetName() : "NULL", weapon ? weapon->GetName() : "NULL", params.damage);
+		g_pGame->GetGameRules()->OnCheat(real, "HitShooterSpoof");
+		return true;
+	} else {
+		CF_Log(8, "[CryFire DLL] RMI RequestHit; real shtr: %s; pretended shtr: %s; tgt: %s; wpn cls: %s; dmg: %f", real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), target ? target->GetName() : "NULL", weapon ? weapon->GetName() : "NULL", params.damage);
+	}
+
 	HitInfo info(params);
 	info.remote=true;
 

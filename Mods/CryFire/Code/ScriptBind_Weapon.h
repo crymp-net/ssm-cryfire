@@ -75,6 +75,9 @@ public:
 	int ActivateLamLaser(IFunctionHandler *pH, bool activate);
 	int ActivateLamLight(IFunctionHandler *pH, bool activate);
 
+	// !!CryFire - added: finds all attached accessories and returns them in a table of entityIds
+	int GetAttachedAccessories(IFunctionHandler *pH);
+
 private:
 	void RegisterGlobals();
 	void RegisterMethods();

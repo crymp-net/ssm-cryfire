@@ -866,7 +866,8 @@ inline void CryWarning( EValidatorModule module,EValidatorSeverity severity,cons
 	va_start(ArgList, format);
 	vsprintf(szBuffer, format, ArgList);
 	va_end(ArgList);
-	GetISystem()->Warning( module,severity,0,0,szBuffer );
+	// !!CryFire - modded: fixed string formatting injection vulnerability
+	GetISystem()->Warning( module,severity,0,0,"%s",szBuffer );
 }
 //////////////////////////////////////////////////////////////////////////
 // Simple log of data with low verbosity.

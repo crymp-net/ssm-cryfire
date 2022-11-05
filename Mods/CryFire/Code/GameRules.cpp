@@ -43,6 +43,14 @@
 #include <StlUtils.h>
 #include <StringUtils.h>
 
+// !!CryFire !!No-GameSpy - added: functions for communication with master server
+#include "CryFire/CryFire.h"
+#include "CryFire/ScriptBind_CryFire.h"
+#include "CryFire/ScriptBind_Integer.h"
+#include "CryFire/AsyncTasks.h"
+#include "CryFire/MSrvConnection.h"
+#include "CryFire/FSUtils.h"
+
 int CGameRules::s_invulnID = 0;
 int CGameRules::s_barbWireID = 0;
 
@@ -96,6 +104,10 @@ CGameRules::~CGameRules()
 	delete m_pRadio;
 	delete m_pBattleDust;
   delete m_pVotingSystem;
+
+	// !!CryFire added
+	if (gEnv->bServer)
+		CryFire::terminate();
 }
 
 //------------------------------------------------------------------------
@@ -189,8 +201,12 @@ bool CGameRules::Init( IGameObject * pGameObject )
 
 	SAFE_HUD_FUNC(GameRulesSet(GetEntity()->GetClass()->GetName()));
 
-  if(isMultiplayer && gEnv->bServer)
-    m_pVotingSystem = new CVotingSystem;
+	if(isMultiplayer && gEnv->bServer)
+		m_pVotingSystem = new CVotingSystem;
+
+  	// !!CryFire - added
+	if (gEnv->bServer)
+		CryFire::initialize( m_pSystem, m_pGameFramework );
 
 	return true;
 }
@@ -298,6 +314,7 @@ void CGameRules::PostSerialize()
 }
 
 //------------------------------------------------------------------------
+// CryFire - modded: actions needed on tick
 void CGameRules::Update( SEntityUpdateContext& ctx, int updateSlot )
 {
 	if (updateSlot!=0)
@@ -355,6 +372,10 @@ void CGameRules::Update( SEntityUpdateContext& ctx, int updateSlot )
 
 	if (gEnv->bServer)
 		GetGameObject()->ChangedNetworkState( eEA_GameServerDynamic );
+
+	// !!CryFire !!No-GameSpy - added: perform actions needed on update
+	if (gEnv->bServer && gEnv->pTimer)
+		CryFire::onUpdate( gEnv->pTimer->GetFrameTime() );
 }
 
 //------------------------------------------------------------------------
@@ -537,8 +558,13 @@ void CGameRules::OnResetMap()
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: better name check on connect to prevent bugs,
+//                     asynchonous getting IP from DNS to prevent lag
 bool CGameRules::OnClientConnect(int channelId, bool isReset)
 {
+	// !!CryFire - added
+	CF_Log(4, "CGameRules::OnClientConnect: channelId = %d, isReset = %d", channelId, (bool)isReset);
+
 	if (!isReset)
 	{
 		m_channelIds.push_back(channelId);
@@ -552,15 +578,19 @@ bool CGameRules::OnClientConnect(int channelId, bool isReset)
 	{
 		string playerName;
 		if (INetChannel *pNetChannel=m_pGameFramework->GetNetChannel(channelId))
-		{
-			playerName=pNetChannel->GetNickname();
-			if (!playerName.empty())
-				playerName=VerifyName(playerName);
-		}
+		{	//-- !!CryFire - modded --------------------------------------
+			CF_Log(3, "conneting player from %s to channel %d", pNetChannel->GetName(), channelId);
+			const char* name = pNetChannel->GetNickname();
+			if (name!=NULL && *name!='\0') {
+				playerName = VerifyName(name);
+			}
+			// async IP getting
+			GetIPLater(pNetChannel, playerName.c_str());
+		}	//------------------------------------------------------------
 
-    if(!playerName.empty())
+		if(!playerName.empty())
 			CallScript(m_serverStateScript, "OnClientConnect", channelId, isReset, playerName.c_str());
-    else
+		else
 			CallScript(m_serverStateScript, "OnClientConnect", channelId, isReset);
 	}
 	else
@@ -641,6 +671,9 @@ void CGameRules::OnClientDisconnect(int channelId, EDisconnectionCause cause, co
 //------------------------------------------------------------------------
 bool CGameRules::OnClientEnteredGame(int channelId, bool isReset)
 { 
+	// !!CryFire - added
+	CF_Log(4, "CGameRules::OnClientEnteredGame: channelId = %d, isReset = %d", channelId, (bool)isReset);
+
 	CActor *pActor=GetActorByChannelId(channelId);
 	if (!pActor)
 		return false;
@@ -1016,9 +1049,10 @@ void CGameRules::RenamePlayer(CActor *pActor, const char *name)
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: solves % crash bug (replaces with _ )
 string CGameRules::VerifyName(const char *name, IEntity *pEntity)
 {
-	string nameFormatter(name);
+	string nameFormatter(name!=NULL ? name : "");
 
 	// size limit is 26
 	if (nameFormatter.size()>26)
@@ -1028,12 +1062,18 @@ string CGameRules::VerifyName(const char *name, IEntity *pEntity)
 	nameFormatter.TrimLeft(' ');
 	nameFormatter.TrimRight(' ');
 
+	// !!CryFire - added: no spaces in names
+	nameFormatter.replace(" ", "_");
+
 	// no empty names
 	if (nameFormatter.empty())
 		nameFormatter="empty";
 
 	// no @ signs
 	nameFormatter.replace("@", "_");
+
+	// !!CryFire - added: no % character
+	nameFormatter.replace("%", "_");
 
 	// search for duplicates
 	if (IsNameTaken(nameFormatter.c_str(), pEntity))
@@ -2768,8 +2808,12 @@ void CGameRules::SendTextMessage(ETextMessageType type, const char *msg, unsigne
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: lets the spectators talk to the players
 bool CGameRules::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId) const
 {
+	bool showSpectatorChat = gEnv->pConsole->GetCVar("cf_showspectatorchat")->GetIVal() == 1;
+
+  if (!showSpectatorChat) {
 	if(sourceId == targetId)
 		return true;
 
@@ -2790,7 +2834,7 @@ bool CGameRules::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId,
 		//CryLog("Disallowing msg (spec): source %d, target %d, sspec %d, sdead %d, tspec %d, tdead %d", sourceId, targetId, sspec, sdead, tspec, tdead);
 		return false;
 	}
-
+  }
 	//CryLog("Allowing msg: source %d, target %d, sspec %d, sdead %d, tspec %d, tdead %d", sourceId, targetId, sspec, sdead, tspec, tdead);
 	return true;
 }
@@ -2831,12 +2875,19 @@ void CGameRules::ChatLog(EChatMessageType type, EntityId sourceId, EntityId targ
 
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: notifies lua about chat message (calls g_gameRules:OnChatMessage)
 void CGameRules::SendChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId, const char *msg)
 {
 	ChatMessageParams params(type, sourceId, targetId, msg, (type == eChatToTeam)?true:false);
 
-	bool sdead=IsDead(sourceId);
-	bool sspec=IsSpectator(sourceId);
+	//bool sdead=IsDead(sourceId);
+	//bool sspec=IsSpectator(sourceId);
+
+	//-- !!CryFire - added -----------------------------------------------
+	bool showMsg = CryFire::onChatMessage( type, sourceId, targetId, msg );
+	if (!showMsg)
+		return;
+	//--------------------------------------------------------------------
 
 	ChatLog(type, sourceId, targetId, msg);
 
@@ -4060,4 +4111,151 @@ bool CGameRules::OnEndCutScene(IAnimSequence* pSeq)
 	m_explosionScreenFX = true;
 
 	return true;
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: returns m_script for external script calling
+IScriptTable* CGameRules::GetScriptTable()
+{
+	return m_script;
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: returns m_script for external script calling
+IGameFramework* CGameRules::GetGameFramework()
+{
+	return m_pGameFramework;
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: converts all characters in the array to lowercase
+void strlower(char* str)
+{
+	while (*str) {
+		if ('A' <= *str&&*str <= 'Z')
+			*str -= 'A'-'a';
+		str++;
+	}
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: finds an actor by part of the entity name
+CActor* CGameRules::GetActorByName(const char* name) const
+{
+	char lowname[32];
+	char actorname[32]; 
+	strncpy(lowname, name, 32);
+	lowname[31] = '\0';
+	strlower(lowname);
+	CActor* foundActor = NULL;
+
+	std::vector<int>::const_iterator it, end = m_channelIds.end();
+	for (it = m_channelIds.begin(); it != end; it++) {
+		CActor* pActor = GetActorByChannelId(*it);
+		if (pActor) {
+			strncpy(actorname, pActor->GetEntity()->GetName(), 32);
+			actorname[31] = '\0';
+			strlower(actorname);
+			if (strstr(actorname, lowname) != NULL) {
+				if (foundActor)
+					return NULL;
+				foundActor = pActor;
+			}
+		}
+	}
+
+	return foundActor;
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: callback when a player shoots
+void CGameRules::OnShoot(EntityId shooterId, EntityId weapId, const char * weapClass, EntityId ammoId, const char * ammoClass, const Vec3& pos, const Vec3& dir, const Vec3& vel)
+{
+	CallScript(m_script, "OnShoot", ScriptHandle(shooterId), ScriptHandle(weapId), weapClass, ScriptHandle(ammoId), ammoClass, pos, dir, vel);
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: handles detected cheats
+void CGameRules::OnCheat(CActor * pActor, const char * cheat)
+{
+	CallScript(m_script, "OnCheat", pActor->GetEntity()->GetScriptTable(), cheat);
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: structs for async get IP
+
+struct GetIPParams {
+	char hostName [255];
+	int channelId;
+};
+
+struct GetIPResult {
+	char IP [16];
+	int channelId;
+};
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+void * asyncGetIPAddr(void * arg)
+{
+	GetIPParams * params = (GetIPParams *)arg;
+	GetIPResult * result = new GetIPResult;
+	
+	result->channelId = params->channelId;
+	if (!NetworkUtils::GetIPFromHost(params->hostName, result->IP)) {
+		result->IP[0] = '\0';
+	}
+
+	delete params;
+	return result;	
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+void * processIPAddr(void * arg)
+{	
+	GetIPResult * result = (GetIPResult *)arg;
+	CGameRules * gr = g_pGame->GetGameRules();
+	CActor * actor = gr->GetActorByChannelId(result->channelId);
+	
+	if (!actor) {
+		CF_Log(2, "player on channel %d left before receiving IP", result->channelId);
+	} else if (result->IP[0] == '\0') {
+		CF_Log(2, "failed to get IP of player %s on channel %d", actor->GetEntity()->GetName(), result->channelId);
+		Script::CallMethod(gr->GetScriptTable(), "OnIPAddrReceived", result->channelId, actor->GetEntityId());
+	} else {
+		CF_Log(2, "received IP %s for player %s on channel %d", result->IP, actor->GetEntity()->GetName(), result->channelId);
+		// save output to actor.DLLIP for futher use
+		actor->GetEntity()->GetScriptTable()->SetValue("DLLIP", result->IP);
+		Script::CallMethod(gr->GetScriptTable(), "OnIPAddrReceived", result->channelId, actor->GetEntityId(), result->IP);
+	}
+	
+	delete result;
+	return NULL;
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added: schedules getting IP of a player from DNS at second thread avoiding lag
+void CGameRules::GetIPLater(INetChannel * channel, const char * playerName)
+{
+	GetIPParams * params;
+	const char * channelName;
+	const char * delimPos;
+	int channelId = m_pGameFramework->GetGameChannelId(channel);
+
+	if (!channelId) {
+		CF_LogError("channelId for getting IP not found");
+		return;
+	}
+	
+	channelName = channel->GetName();
+	delimPos = strchr(channelName, ':');
+	size_t length = delimPos - channelName;
+	params = new GetIPParams;
+	params->channelId = channelId;
+	strncpy(params->hostName, channelName, length);
+	params->hostName[length] = '\0';
+
+	CF_Log(3, "getting IP of %s on channel %d", playerName, channelId);
+	AsyncTasks::addTask(asyncGetIPAddr, params, processIPAddr);	
 }

@@ -490,6 +490,10 @@ void CSingle::Lock(EntityId targetId, int partId /*=0*/)
 			}
 		}
 	}
+
+	// !!CryFire - added
+	Script::CallMethod("VTOL_HUD", "OnLock", ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
+	Script::CallMethod("g_gameRules", "OnLock", ScriptHandle(m_pWeapon->GetEntityId()), ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
 }
 
 void CSingle::ResetLock()
@@ -501,6 +505,9 @@ void CSingle::ResetLock()
 			SAFE_HUD_FUNC(AutoAimUnlock(m_lockedTarget));
 		}
 	}
+
+	// !!CryFire - added
+	Script::CallMethod("VTOL_HUD", "OnResetLock", ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
 
 	m_bLocked = false;
 	m_bLocking = false;
@@ -518,6 +525,9 @@ void CSingle::Unlock()
 			SAFE_HUD_FUNC(AutoAimUnlock(m_lockedTarget));
 		}
 	}
+
+	// !!CryFire - added
+	Script::CallMethod("VTOL_HUD", "OnUnlock", ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
 
 	m_bLocked = false;
 	m_bLocking = false;
@@ -541,6 +551,9 @@ void CSingle::StartLocking(EntityId targetId, int partId /*=0*/)
 			SAFE_HUD_FUNC(AutoAimLocking(m_lockedTarget));
 		}
 	}
+
+	// !!CryFire - added
+	Script::CallMethod("VTOL_HUD", "OnStartLocking", ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
 }
 
 //------------------------------------------------------------------------
@@ -1552,7 +1565,10 @@ bool CSingle::Shoot(bool resetAnimation, bool autoreload, bool noSound)
 	if (m_pWeapon->IsServer())
 		g_pGame->GetIGameFramework()->GetIGameplayRecorder()->Event(m_pWeapon->GetOwner(), GameplayEvent(eGE_WeaponShot, ammo->GetName(), 1, (void *)m_pWeapon->GetEntityId()));
 
-  m_pWeapon->OnShoot(m_pWeapon->GetOwnerId(), pAmmo?pAmmo->GetEntity()->GetId():0, ammo, pos, dir, vel);
+	m_pWeapon->OnShoot(m_pWeapon->GetOwnerId(), pAmmo?pAmmo->GetEntity()->GetId():0, ammo, pos, dir, vel);
+	//-- !!VTOLJet - added: send warning to a locked target ---------------------------------------------------------------
+	// todo - send some radio warning to a client
+	//---------------------------------------------------------------------------------------------------------------------
 
 	MuzzleFlashEffect(true); 
   //SmokeEffect();  //Only when stop firing - for Sean
@@ -2836,6 +2852,10 @@ void CSingle::NetShootEx(const Vec3 &pos, const Vec3 &dir, const Vec3 &vel, cons
 		g_pGame->GetIGameFramework()->GetIGameplayRecorder()->Event(m_pWeapon->GetOwner(), GameplayEvent(eGE_WeaponShot, ammo->GetName(), 1, (void *)m_pWeapon->GetEntityId()));
 
   m_pWeapon->OnShoot(m_pWeapon->GetOwnerId(), pAmmo?pAmmo->GetEntity()->GetId():0, ammo, pos, dir, vel);
+	//-- !!CryFire - added: send warning to a locked target ---------------------------------------------------------------
+	if (m_bLocked)
+		Script::CallMethod("VTOL_HUD", "OnMissileFired", ScriptHandle(m_pWeapon->GetOwnerId()), ScriptHandle(m_lockedTarget));
+	//---------------------------------------------------------------------------------------------------------------------
 
 	MuzzleFlashEffect(true);
   DustEffect(pos);

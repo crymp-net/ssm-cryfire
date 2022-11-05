@@ -624,6 +624,359 @@ struct Script
 		PushParams(pSS,p1,p2,p3,p4,p5);
 		return pSS->EndCall(ret);
 	}
+/*
+	bool CallMethod(IScriptTable *pTable,HSCRIPTFUNCTION func,const P1 &p1,const P2 &p2,const P3 &p3 ) {
+		IScriptSystem *pSS = pTable->GetScriptSystem();
+		if (!pSS->BeginCall(func)) return false;
+
+	void CallScript(IScriptTable *pScript, const char *name, const P1 &p1) {
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+
+*/
+	//--- !!CryFire - added more call options for more comfort ------------------------------------------------------
+
+	// calling methods of an optional table
+
+	static bool CallMethod(const char* sTable, const char* sFunction)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			return pSS->EndCall();
+		}
+	}
+	template<class P1>
+	static bool CallMethod(const char* sTable, const char* sFunction, const P1& p1)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1);
+			return pSS->EndCall();
+		}
+	}
+	template<class P1, class P2>
+	static bool CallMethod(const char* sTable, const char* sFunction, const P1& p1, const P2& p2)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2);
+			return pSS->EndCall();
+		}
+	}
+	template<class P1, class P2, class P3>
+	static bool CallMethod(const char* sTable, const char* sFunction, const P1& p1,const P2& p2, const P3& p3)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3);
+			return pSS->EndCall();
+		}
+	}
+	template<class P1, class P2, class P3, class P4>
+	static bool CallMethod(const char* sTable, const char* sFunction, const P1& p1, const P2& p2, const P3& p3, const P4& p4)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3, p4);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3, p4);
+			return pSS->EndCall();
+		}
+	}
+	template<class P1, class P2, class P3, class P4, class P5>
+	static bool CallMethod(const char* sTable, const char* sFunction, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3, p4, p5);
+			return pSS->EndCall();
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3, p4, p5);
+			return pSS->EndCall();
+		}
+	}
+
+	// calling methods of an optional table, with return value
+
+	template<class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			return pSS->EndCall(ret);
+		}
+	}
+	template<class P1, class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, const P1& p1, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1);
+			return pSS->EndCall(ret);
+		}
+	}
+	template<class P1, class P2, class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, const P1& p1, const P2& p2, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2);
+			return pSS->EndCall(ret);
+		}
+	}
+	template<class P1, class P2, class P3, class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, const P1& p1,const P2& p2, const P3& p3, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3);
+			return pSS->EndCall(ret);
+		}
+	}
+	template<class P1, class P2, class P3, class P4, class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, const P1& p1, const P2& p2, const P3& p3, const P4& p4, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3, p4);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3, p4);
+			return pSS->EndCall(ret);
+		}
+	}
+	template<class P1, class P2, class P3, class P4, class P5, class Ret>
+	static bool CallReturn(const char* sTable, const char* sFunction, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, Ret& ret)
+	{
+		IScriptSystem* pSS = gEnv->pScriptSystem;
+		ScriptAnyValue anyT, anyF;
+
+		if (sTable) {
+			pSS->GetGlobalAny(sTable, anyT);
+			if (anyT.GetVarType() != svtObject)
+				return false;
+			anyT.table->GetValueAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, anyT.table, p1, p2, p3, p4, p5);
+			return pSS->EndCall(ret);
+		}
+		else {
+			pSS->GetGlobalAny(sFunction, anyF);
+			if (anyF.GetVarType() != svtFunction)
+				return false;
+			if (!pSS->BeginCall(anyF.function))
+				return false;
+			PushParams(pSS, p1, p2, p3, p4, p5);
+			return pSS->EndCall(ret);
+		}
+	}
+	//--- !!CryFire - added------------------------------------------------------------------------------------------
+
 
 
 	//////////////////////////////////////////////////////////////////////////

@@ -747,6 +747,9 @@ bool CNanoSuit::SetMode(ENanoMode mode, bool forceUpdate, bool keepInvul)
 					g_pGame->GetBulletTime()->Activate(true);
 				}
 			}
+			//-- !!CryFire - added: needed for speed hack detection ------------------
+			m_pOwner->GetEntity()->GetScriptTable()->SetValue("hadSpeedMode", true);
+			//------------------------------------------------------------------------
 			break;
 		case NANOMODE_STRENGTH:
 			SetAllSlots(50.0f, 100.0f, 25.0f);

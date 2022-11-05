@@ -1117,6 +1117,13 @@ public:
 
 	virtual bool IsAlien() {return false;}
 
+	//-- !!CryFire - added -----------------------------------------------
+	bool GetProfileId(int & output) const;
+	bool GetHostName(char * output) const;
+	bool GetIPAddress(char * output) const;
+	bool GetPort(unsigned int & output) const;
+	//--------------------------------------------------------------------
+
 protected:
 
 	virtual void SetMaterialRecursive(ICharacterInstance *charInst, bool undo, IMaterial *newMat = 0);

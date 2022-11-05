@@ -31,6 +31,43 @@
 #include "Menus/MPHub.h"
 #include "INetworkService.h"
 
+//------------------------------------------------------------------------
+// !!CryFire: variables for CVars' values
+
+static int cf_usegsreplacement;
+static int cf_removeexplosives;
+static int cf_showspectatorchat;
+
+//------------------------------------------------------------------------
+// !!CryFire: handlers of CVars and commands' functions
+
+// new sv_maxplayers change handler allowing set more than 32
+static void OnMaxPlayersChange(ICVar* pCVar)
+{
+	int val = pCVar->GetIVal();
+	if (val < 2) {
+		val = 2;
+		pCVar->Set(val);
+	}
+}
+
+// cf_usegsreplacement change handler
+#include "CryFire/MSrvConnection.h"
+static void OnGSReplacementChange(ICVar* pCVar)
+{
+	MSrvConnection::onGSReplacementChange(pCVar->GetIVal() != 0);
+}
+
+// reloadmaps command function
+static void ReloadMaps(IConsoleCmdArgs* pArgs)
+{
+	IGameFramework* pGameFramework = g_pGame->GetGameRules()->GetGameFramework();
+	ILevelSystem *pLevelSystem = pGameFramework->GetILevelSystem();
+	if (pLevelSystem)
+		pLevelSystem->Rescan();
+}
+
+
 static void BroadcastChangeSafeMode( ICVar * )
 {
 	SGameObjectEvent event(eCGE_ResetMovementController, eGOEF_ToExtensions);
@@ -555,6 +592,13 @@ void SCVars::InitCVars(IConsole *pConsole)
 	pConsole->Register("sv_pacifist", &sv_pacifist, 0, 0, "Pacifist mode (only works on dedicated server)");
  
 	pVehicleQuality = pConsole->GetCVar("v_vehicle_quality");		assert(pVehicleQuality);
+	
+	//-- !!CryFire - added ---------------------------------------------------
+	pConsole->GetCVar("sv_maxplayers")->SetOnChangeCallback(::OnMaxPlayersChange);
+	pConsole->Register("cf_usegsreplacement", &cf_usegsreplacement, 0, 0, "Enables alternative master server replacing GameSpy", OnGSReplacementChange);
+	pConsole->Register("cf_removeexplosives", &cf_removeexplosives, 0, 0, "Toggles removing explosives on player death", NULL);
+	pConsole->Register("cf_showspectatorchat", &cf_showspectatorchat, 1, 0, "Allows chat messages from spectators to be shown to all players", NULL);
+	//------------------------------------------------------------------------
 
   NetInputChainInitCVars();
 }
@@ -931,6 +975,9 @@ void CGame::RegisterConsoleCommands()
 	m_pConsole->AddCommand("register", CmdRegisterNick, VF_CHEAT, "Register nickname with email, nickname and password");
 	m_pConsole->AddCommand("connect_crynet",CmdCryNetConnect,0,"Connect to online game server");
 	m_pConsole->AddCommand("preloadforstats","PreloadForStats()",VF_CHEAT,"Preload multiplayer assets for memory statistics.");
+
+	// !!CryFire - added: command to reload maps for adding them during run
+	m_pConsole->AddCommand("reloadmaps", ReloadMaps, 0, "reloads maps from Crysis\\Game\\Levels directory");
 }
 
 //------------------------------------------------------------------------

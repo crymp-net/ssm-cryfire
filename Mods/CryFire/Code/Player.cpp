@@ -3276,6 +3276,7 @@ void CPlayer::Revive( bool fromInit )
 		ResetFPView();
 }
 
+// !!CryFire - modded: optional explosives removing
 void CPlayer::Kill()
 {
 	if (CNanoSuit *pSuit=GetNanoSuit())
@@ -3283,7 +3284,8 @@ void CPlayer::Kill()
 
 	// notify any claymores/mines that this player has died
 	//	(they will be removed 30s later)
-	RemoveAllExplosives(EXPLOSIVE_REMOVAL_TIME);
+	if (gEnv->pConsole->GetCVar("cf_removeexplosives")->GetIVal() == 1)
+		RemoveAllExplosives(EXPLOSIVE_REMOVAL_TIME);
 
 	CActor::Kill();
 }

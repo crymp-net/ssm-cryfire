@@ -116,6 +116,8 @@ void CWeapon::OnShoot(EntityId shooterId, EntityId ammoId, IEntityClass* pAmmoTy
 				SAFE_HUD_FUNC(TickBattleStatus(1.0f));
 		}
 	}
+	// !!CryFire - added: on shoot callback
+	g_pGame->GetGameRules()->OnShoot(shooterId, this->GetEntityId(), this->GetEntity()->GetClass()->GetName(), ammoId, pAmmoType ? pAmmoType->GetName() : NULL, pos, dir, vel);
 }
 
 //------------------------------------------------------------------------

@@ -51,6 +51,12 @@ public:
 	virtual int GetHeadPos(IFunctionHandler *pH);
 	virtual int PostPhysicalize(IFunctionHandler *pH);
 	virtual int GetChannel(IFunctionHandler *pH);
+	//-- !!CryFire - added -----------------------------------------------
+	virtual int GetProfileId(IFunctionHandler *pH);
+	virtual int GetHostName(IFunctionHandler *pH);
+	virtual int GetIPAddress(IFunctionHandler *pH);
+	virtual int GetPort(IFunctionHandler *pH);
+	//--------------------------------------------------------------------
 	virtual int IsPlayer(IFunctionHandler *pH);
 	virtual int IsLocalClient(IFunctionHandler *pH);
 	virtual int GetLinkedVehicleId(IFunctionHandler *pH);

@@ -3159,6 +3159,7 @@ void CActor::SetSleepTimer(float timer)
 
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: detects drop item spoof
 IMPLEMENT_RMI(CActor, SvRequestDropItem)
 {
 	CItem *pItem = GetItem(params.itemId);
@@ -3168,14 +3169,33 @@ IMPLEMENT_RMI(CActor, SvRequestDropItem)
 		return false;
 	}
 
+	//-- !!CryFire - added -----------------------------------------------
+	channelId chnlId  = (channelId)m_pGameFramework->GetGameChannelId(pNetChannel);
+	CActor * real      = static_cast<CActor *>(m_pGameFramework->GetIActorSystem()->GetActorByChannelId(chnlId));
+	CActor * pretended = pItem->GetOwnerActor();
+
+	if (!real)
+		return RMIerror("RequestDropItem", chnlId, "actor related to the request channel not found", "item", pItem->GetEntity()->GetName());
+	if (!pretended)
+		RMIwarning("RequestDropItem", chnlId, real->GetEntity()->GetName(), "actor not found!", "item", pItem->GetEntity()->GetName());
+	else if (pretended != real) {
+		RMIdebug(1, "RequestDropItem", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "item", pItem->GetEntity()->GetName());
+		g_pGame->GetGameRules()->OnCheat(real, "DropItemSpoof");
+		return true;
+	} else {
+		RMIdebug(8, "RequestDropItem", chnlId, real->GetEntity()->GetName(), pretended->GetEntity()->GetName(), "item", pItem->GetEntity()->GetName());
+		CF_Log(8, "this actor: %s", this->GetEntity()->GetName());
+	}
+	//--------------------------------------------------------------------
+
 	//CryLogAlways("%s::SvRequestDropItem(%s)", GetEntity()->GetName(), pItem->GetEntity()->GetName());
 
 	pItem->Drop(params.impulseScale, params.selectNext, params.byDeath);
-
 	return true;
 }
 
 //------------------------------------------------------------------------
+// !!CryFire - modded: allows server to hook item pickups and decide if pickup is allowed
 IMPLEMENT_RMI(CActor, SvRequestPickUpItem)
 {
 	CItem *pItem = GetItem(params.itemId);
@@ -3194,9 +3214,15 @@ IMPLEMENT_RMI(CActor, SvRequestPickUpItem)
 	assert(pChannelActor);
 */
 	EntityId ownerId=pItem->GetOwnerId();
-	if (!ownerId)
-		pItem->PickUp(GetEntityId(), true);
+	if (ownerId)
+		return true;
 
+	bool canPickup = true;
+	Script::CallReturn("g_gameRules", "CanPickupItem", GetEntity()->GetScriptTable(), pItem->GetEntity()->GetScriptTable(), canPickup);
+	if (!canPickup)
+		return true;
+		
+	pItem->PickUp(GetEntityId(), true);
 	return true;
 }
 
@@ -3941,5 +3967,70 @@ void CActor::NotifyInventoryAmmoChange(IEntityClass* pAmmoClass, int amount)
 		g_pGame->GetHUD()->DisplayAmmoPickup(pAmmoClass->GetName(), amount);
 }
 
+//-------------------------------------------------------------------
+// !!CryFire - added: gets profileID from actor's channel
+bool CActor::GetProfileId(int & output) const
+{
+	INetChannel *pNetChannel = m_pGameFramework->GetNetChannel((int)GetChannelId());
+	if (!pNetChannel)
+		return false;
 
+	output = pNetChannel->GetProfileId();
+	return true;
+}
 
+//-------------------------------------------------------------------
+// !!CryFire - added: parses host name from actor's channel name
+bool CActor::GetHostName(char * output) const
+{
+	INetChannel* pNetChannel = m_pGameFramework->GetNetChannel((int)GetChannelId());
+	if (!pNetChannel)
+		return false;
+
+	const char * channelName = pNetChannel->GetName();
+	const char * delimPos = strchr(channelName, ':');
+	size_t length = delimPos - channelName;
+	strncpy(output, channelName, length);
+	output[length] = '\0';
+	return true;
+}
+
+//-------------------------------------------------------------------
+// !!CryFire - added: gets IP address from DNS servers by host name
+#include "CryFire/NetworkUtils.h"
+
+bool CActor::GetIPAddress(char * output) const
+{
+	char hostName[255];
+	char* IP = NULL;
+	
+	// search for previous result and if it exists, return it immediately without quering DNS
+	this->GetEntity()->GetScriptTable()->GetValue("DLLIP", IP);
+	if (IP) {
+		strcpy(output, IP);
+		return true;
+	}
+
+	if (!GetHostName(hostName))
+		return false;
+	if (!NetworkUtils::GetIPFromHost(hostName, output))
+		return false;
+
+	// save output to actor.DLLIP for futher use
+	this->GetEntity()->GetScriptTable()->SetValue("DLLIP", output);
+
+	return true;
+}
+
+//-------------------------------------------------------------------
+// !!CryFire - added: parses host name from actor's channel name
+bool CActor::GetPort(unsigned int & output) const
+{
+	INetChannel * pNetChannel = m_pGameFramework->GetNetChannel((int)GetChannelId());
+	if (!pNetChannel)
+		return false;
+
+	const char * channelName = pNetChannel->GetName();
+	const char * delimPos = strchr(channelName, ':');
+	return sscanf(delimPos+1, "%u", &output) > 0;
+}

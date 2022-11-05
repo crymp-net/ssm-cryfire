@@ -4,7 +4,7 @@
 	Version="9,00"
 	Name="CryFire"
 	ProjectGUID="{2EB52047-0A81-4343-B703-DF221CA5CC2A}"
-	RootNamespace="CryFire"
+	RootNamespace="CrysisMod"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -73,16 +73,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/$(ProjectName).dll"
+				OutputFile="$(OutDir)/CrysisMod.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ProgramDatabaseFile="$(OutDir)/CrysisMod.pdb"
 				SubSystem="2"
 				LargeAddressAware="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/$(ProjectName).lib"
+				ImportLibrary="$(OutDir)/CrysisMod.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -165,7 +165,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/$(ProjectName).dll"
+				OutputFile="$(OutDir)/CryFire.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateManifest="true"
@@ -254,13 +254,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/$(ProjectName).dll"
+				OutputFile="$(OutDir)/CrysisMod.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ProgramDatabaseFile="$(OutDir)/CrysisMod.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/$(ProjectName).lib"
+				ImportLibrary="$(OutDir)/CrysisMod.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -344,11 +344,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/$(ProjectName).dll"
+				OutputFile="$(OutDir)/CrysisMod.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				ProgramDatabaseFile="$(OutDir)/CrysisMod.pdb"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				BaseAddress="0x39000000"
@@ -2018,7 +2018,7 @@
 			Name="Resources"
 			>
 			<File
-				RelativePath=".\$(ProjectName).ico"
+				RelativePath=".\CrysisMod.ico"
 				>
 			</File>
 			<File
@@ -2086,14 +2086,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CryFire\Http.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CryFire\Http.h"
-				>
-			</File>
-			<File
 				RelativePath=".\CryFire\Logging.cpp"
 				>
 			</File>
@@ -2135,7 +2127,7 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath="..\Launcher\$(ProjectName).ico"
+			RelativePath="..\Launcher\CrysisMod.ico"
 			>
 		</File>
 		<File

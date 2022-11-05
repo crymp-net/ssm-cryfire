@@ -28,6 +28,10 @@
 #include "ServerSynchedStorage.h"
 #include "Cry_Camera.h"
 
+// !!CryFire - added: make CryFire logging functions available
+#include "CryFire/Logging.h"
+
+
 #define GAME_NAME				"Crysis"
 #define GAME_LONGNAME		"Crysis"
 

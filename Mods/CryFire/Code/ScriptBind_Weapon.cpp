@@ -612,6 +612,9 @@ void CScriptBind_Weapon::RegisterMethods()
 
 	SCRIPT_REG_TEMPLFUNC(ActivateLamLaser, "activate");
 	SCRIPT_REG_TEMPLFUNC(ActivateLamLight, "activate");
+
+	// !!CryFire - added: finds all attached accessories and returns them in a table of entityIds
+	SCRIPT_REG_TEMPLFUNC(GetAttachedAccessories, "");
 }
 
 //------------------------------------------------------------------------
@@ -671,6 +674,24 @@ int CScriptBind_Weapon::ActivateLamLight(IFunctionHandler *pH, bool activate)
 
 	return pH->EndFunction();
 
+}
+
+//-------------------------------------------------------------------------
+// !!CryFire - added: finds all attached accessories and returns them in a table of entityIds
+int CScriptBind_Weapon::GetAttachedAccessories(IFunctionHandler *pH)
+{
+	CWeapon *pWeapon = GetWeapon(pH);
+	if (!pWeapon)
+		return pH->EndFunction();
+
+	const CItem::TAccessoryMap* acsmap = pWeapon->GetAttachedAccessories();
+	SmartScriptTable acstable(gEnv->pScriptSystem->CreateTable());
+
+	for (CItem::TAccessoryMap::const_iterator it = acsmap->begin(); it != acsmap->end(); it++) {
+		acstable->PushBack(ScriptHandle(it->second));
+	}
+	
+	return pH->EndFunction(acstable);
 }
 
 #undef REUSE_VECTOR

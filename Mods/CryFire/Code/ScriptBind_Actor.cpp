@@ -56,6 +56,12 @@ CScriptBind_Actor::CScriptBind_Actor(ISystem *pSystem)
 	SCRIPT_REG_FUNC(GetHeadDir);
 	SCRIPT_REG_FUNC(PostPhysicalize);
 	SCRIPT_REG_FUNC(GetChannel);
+	//-- !!CryFire - added -----------------------------------------------
+	SCRIPT_REG_FUNC(GetProfileId);
+	SCRIPT_REG_FUNC(GetHostName);
+	SCRIPT_REG_FUNC(GetIPAddress);
+	SCRIPT_REG_FUNC(GetPort);
+	//--------------------------------------------------------------------
 	SCRIPT_REG_FUNC(IsPlayer);
 	SCRIPT_REG_FUNC(IsLocalClient);
 	SCRIPT_REG_FUNC(LinkToEntity);
@@ -1763,4 +1769,67 @@ int CScriptBind_Actor::IsFlying(IFunctionHandler *pH)
 	}
 
 	return pH->EndFunction();
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+int CScriptBind_Actor::GetProfileId(IFunctionHandler *pH)
+{
+	CActor *pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	int intProfileID;
+	if (!pActor->GetProfileId(intProfileID))
+		return pH->EndFunction();
+
+	char strProfileID[16];
+	sprintf(strProfileID, "%d", intProfileID);
+
+	return pH->EndFunction( strProfileID );
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+int CScriptBind_Actor::GetHostName(IFunctionHandler *pH)
+{
+	CActor *pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	char hostName[255];
+	if (!pActor->GetHostName(hostName))
+		return pH->EndFunction();
+
+	return pH->EndFunction( hostName );
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+int CScriptBind_Actor::GetIPAddress(IFunctionHandler *pH)
+{
+	CActor *pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	char IPAddress[16];
+	if (!pActor->GetIPAddress(IPAddress))
+		return pH->EndFunction();
+
+	return pH->EndFunction( IPAddress );
+}
+
+//------------------------------------------------------------------------
+// !!CryFire - added
+int CScriptBind_Actor::GetPort(IFunctionHandler *pH)
+{
+	CActor *pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	unsigned int port;
+	if (!pActor->GetPort(port))
+		return pH->EndFunction();
+
+	return pH->EndFunction( port );
 }

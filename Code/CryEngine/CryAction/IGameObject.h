@@ -368,8 +368,7 @@ public:
 	{
 		bool ok = false;
 		bool foundObject = false;
-		char msg[256];
-		msg[0] = 0;
+		char msg[256] = "empty";
 
 		if (IGameObject * pGameObject = gEnv->pGame->GetIGameFramework()->GetGameObject(m_id))
 		{
@@ -382,6 +381,8 @@ public:
 			{
 				sprintf(msg, "Game object extension with base %.8x for entity %s for RMI %s not found", (uint32)m_pRMI->pBase, pGameObject->GetEntity()->GetName(), m_pRMI->pMsgDef->description);
 				GameWarning("%s", msg);
+				// !!CryFire - added: partial Annihilator detection
+				m_pChannel->Disconnect(eDC_Kicked, "probably server crasher");
 			}
 		}
 		else
@@ -392,11 +393,12 @@ public:
 		if (!ok)
 		{
 			GameWarning("Error handling RMI %s", m_pRMI->pMsgDef->description);
-
 			if (!foundObject && !gEnv->bServer && !m_pChannel->IsInTransition())
 			{
-				assert(msg[0]);
-				m_pChannel->Disconnect( eDC_ContextCorruption, msg );
+				// !!CryFire - added: partial Annihilator detection
+				m_pChannel->Disconnect(eDC_Kicked, "probably server crasher");
+				//assert(msg[0]);
+				//m_pChannel->Disconnect( eDC_ContextCorruption, msg );
 			}
 			else
 			{
@@ -466,7 +468,7 @@ protected:
 		if (g_nMessages >= MAX_STATIC_MESSAGES)
 		{
 			// Assert or CryError here uses gEnv, which is not yet initialized.
-			((void(*)())NULL)();
+			//((void(*)())NULL)();
 			return NULL;
 		}
 		SGameObjectExtensionRMI& rmi = g_vMessages[g_nMessages++];
@@ -538,7 +540,7 @@ private:
 	cls::MethodInfo_##name cls::m_info##name = cls::Helper_AddMessage( &cls::Decode_##name, "RMI:" #cls ":" #name, cls::Attach_##name, cls::ServerCall_##name, cls::Reliability_##name, cls::LowDelay_##name ); \
 	INetAtSyncItem * cls::Decode_##name( TSerialize ser, EntityId * pID, INetChannel* pChannel ) \
 	{ \
-		assert(pID); \
+		if (!pID) return NULL; \
 		Params_##name params; \
 		params.SerializeWith( ser ); \
 		return CRMIAtSyncItem<Params_##name, cls>::Create( params, *pID, m_info##name.pMethodInfo, &cls::Handle_##name, pChannel ); \

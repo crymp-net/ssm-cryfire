@@ -436,6 +436,15 @@ public:
 
 	int GetCurrentStateId() const { return m_currentStateId; }
 
+	//-- !!CryFire - added -----------------------------------------------
+	IScriptTable* GetScriptTable();
+	IGameFramework* GetGameFramework();
+	CActor* GetActorByName(const char* name) const;
+	void OnShoot(EntityId shooterId, EntityId weapId, const char * weapClass, EntityId ammoId, const char * ammoClass, const Vec3& pos, const Vec3& dir, const Vec3& vel);
+	void OnCheat(CActor* pActor, const char* cheat);
+	void GetIPLater(INetChannel* channel, const char * playerName);
+	//--------------------------------------------------------------------
+
 	//misc 
 	// Next time CGameRules::OnCollision is called, it will skip this entity and return false
 	// This will prevent squad mates to be hit by the player
@@ -1018,6 +1027,7 @@ protected:
 	// fill source/target dependent params in m_collisionTable
 	void PrepCollision(int src, int trg, const SGameCollision& event, IEntity* pTarget);
 
+ public:
 	void CallScript(IScriptTable *pScript, const char *name)
 	{
 		if (!pScript || pScript->GetValueType(name) != svtFunction)
@@ -1071,7 +1081,7 @@ protected:
 		m_pScriptSystem->EndCall();
 	};
 	template<typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-	void CallScript(IScriptTable *pScript, const char *name, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6)
+	void CallScript(IScriptTable *pScript, const char *name, const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6)
 	{
 		if (!pScript || pScript->GetValueType(name) != svtFunction)
 			return;
@@ -1079,6 +1089,104 @@ protected:
 		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4); m_pScriptSystem->PushFuncParam(p5); m_pScriptSystem->PushFuncParam(p6);
 		m_pScriptSystem->EndCall();
 	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+	void CallScript(IScriptTable *pScript, const char *name, const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6, const P7 &p7)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4); m_pScriptSystem->PushFuncParam(p5); m_pScriptSystem->PushFuncParam(p6); m_pScriptSystem->PushFuncParam(p7);
+		m_pScriptSystem->EndCall();
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
+	void CallScript(IScriptTable *pScript, const char *name, const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4, const P5 &p5, const P6 &p6, const P7 &p7, const P8 &p8)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4); m_pScriptSystem->PushFuncParam(p5); m_pScriptSystem->PushFuncParam(p6); m_pScriptSystem->PushFuncParam(p7); m_pScriptSystem->PushFuncParam(p8);
+		m_pScriptSystem->EndCall();
+	};
+	// !!CryFire - added
+	template<typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, const P2& p2, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, const P2& p2, const P3& p3, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename P4, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, const P2& p2, const P3& p3, const P4& p4, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename P4, typename P5, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4); m_pScriptSystem->PushFuncParam(p5);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+	// !!CryFire - added
+	template<typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename Ret>
+	bool CallScriptReturn(IScriptTable* pScript, const char* name, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5 &p5, const P6& p6, Ret& ret)
+	{
+		if (!pScript || pScript->GetValueType(name) != svtFunction)
+			return false;
+		m_pScriptSystem->BeginCall(pScript, name); m_pScriptSystem->PushFuncParam(m_script);
+		m_pScriptSystem->PushFuncParam(p1); m_pScriptSystem->PushFuncParam(p2); m_pScriptSystem->PushFuncParam(p3); m_pScriptSystem->PushFuncParam(p4); m_pScriptSystem->PushFuncParam(p5); m_pScriptSystem->PushFuncParam(p6);
+		m_pScriptSystem->EndCall(ret);
+		return true;
+	};
+
+ protected:
 
 	IGameFramework			*m_pGameFramework;
 	IGameplayRecorder		*m_pGameplayRecorder;
@@ -1166,5 +1274,6 @@ protected:
 
 	CShotValidator			*m_pShotValidator;
 };
+
 
 #endif //__GAMERULES_H__
