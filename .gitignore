@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Mods/CryFire/Code/.vs/CryFire
+/Mods/CryFire/Code/Backup
+/Mods/CryFire/Code/UpgradeLog.htm
