@@ -118,6 +118,7 @@ class MSrvConnection {
 	static int getKills(EntityId entId);
 	static int getDeaths(EntityId entId);
 	static int getRank(EntityId entId);
+	static int getTeam(EntityId entId);
 	static char * getNextArg(char * pos);
 
 };

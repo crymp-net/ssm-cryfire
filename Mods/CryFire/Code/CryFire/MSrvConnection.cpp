@@ -416,7 +416,7 @@ std::string MSrvConnection::gatherPlayersInfo()
 		if (!plTable) continue;
 		const char* profileId = NULL;
 		plTable->GetValue("profile", profileId);
-		osstream << '@' << plEntity->GetName() << '%' << getRank(*pit) << '%' << getKills(*pit) << '%' << getDeaths(*pit) << '%' << (profileId ? profileId : "0");
+		osstream << '@' << plEntity->GetName() << '%' << getRank(*pit) << '%' << getKills(*pit) << '%' << getDeaths(*pit) << '%' << (profileId ? profileId : "0") << getTeam(*pit);
 	}
 	return osstream.str();
 }
@@ -636,17 +636,24 @@ int MSrvConnection::getKills(EntityId entId) {
 	if (entity) g_pGame->GetGameRules()->GetSynchedEntityValue(entId, SCORE_KILLS_KEY, val);
 	return val;
 }
+
 int MSrvConnection::getDeaths(EntityId entId) {
 	int val = 0; IEntity* entity = gEnv->pEntitySystem->GetEntity(entId);
 	if (entity) g_pGame->GetGameRules()->GetSynchedEntityValue(entId, SCORE_DEATHS_KEY, val);
 	return val;
 }
+
 int MSrvConnection::getRank(EntityId entId) {
 	int val = 0; IEntity* entity = gEnv->pEntitySystem->GetEntity(entId);
 	const char* gameRules = g_pGame->GetGameRules()->GetEntity()->GetClass()->GetName();
 	if (entity && strcmp(gameRules, "PowerStruggle") == 0) g_pGame->GetGameRules()->GetSynchedEntityValue(entId, RANK_KEY, val);
 	return val;
 }
+
+int MSrvConnection::getTeam(EntityId entId) {
+	return g_pGame->GetGameRules()->GetTeam(entId);
+}
+
 char* MSrvConnection::getNextArg(char* pos) {
 	if (!pos) return NULL;
 	while (true) { if (!*pos) return NULL; if (*pos == ' ') break; pos++; }
