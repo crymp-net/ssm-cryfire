@@ -38,6 +38,7 @@ struct AIObjectParameters;
 struct SFogVolumeProperties;
 struct IParticleEffect;
 struct SpawnParams;
+struct IParticleEmitter;
 
 //////////////////////////////////////////////////////////////////////////
 

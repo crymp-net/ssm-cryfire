@@ -267,4 +267,22 @@ private:
 #define TYPEDEF_AUTOPTR(T) typedef _smart_ptr<T> T##_AutoPtr; typedef std::vector<T##_AutoPtr> T##_AutoArray;
 #endif
 
+#ifdef WIN64
+#include <memory>
+
+namespace std {
+	template<typename T>
+	using auto_ptr = std::unique_ptr<T>;
+}
+#endif
+
+#include <functional>
+
+namespace std {
+	template <typename R, typename T>
+	auto mem_fun(R(T::* f)()) {
+		return std::mem_fn(f);
+	}
+}
+
 #endif //_SMART_PTR_H_
