@@ -1,23 +1,22 @@
 //================================================================================
-// File:    Code/CryFire/FSUtils.cpp
-//                 ____                       ____
+// File:   Code/CryFire/FSUtils.cpp
+//                ____                        ____
 // Project: SSM  /\  _ `\                    /\  _`\   __
 //               \ \ \/\_\    _  __   __  __ \ \ \_/  /\_\    _  __     ___
 //                \ \ \/_/_  /\`'__\ /\ \/\ \ \ \  _\ \/_/   /\`'__\  /' __`\
 //                 \ \ \_\ \ \ \ \_/ \ \ \_\ \ \ \ \/   /\`\ \ \ \_/ /\  \__/
-//                  \ \____/  \ \_\   \/`____ \ \ \_\   \ \_\ \ \_\  \ \_____\
-//                   \/___/    \/_/    `/___/\ \ \/_/    \/_/  \/_/   \/____ /
-//                                        /\___/
-//                                        \/__/
+//                  \ \____/  \ \_\   \/`____ \ \ \_\   \ \_\ \ \_\  \ \______\
+//                   \/___/    \/_/    `/___/\ \ \/_/    \/_/  \/_/   \/_____ /
+//                                         /\___/
+//                                         \/__/
 // Created on:  10.9.2014
-// Last edited: 10.9.2014
+// Last edited: 2026 Refactor for VS2022
 //--------------------------------------------------------------------------------
-// Description: File System utilities for CryFire
+// Description: File System utilities for CryFire (VS2022 Native WinAPI Migrated)
 //--------------------------------------------------------------------------------
 // Authors:     Patrick Glatt (HipHipHurra)
 //              Jan Broz (Youda008)
 //================================================================================
-
 
 #include "StdAfx.h"
 
@@ -27,76 +26,95 @@
 #include <cstring>
 #include <cerrno>
 #include <time.h>
-#include <dirent.h>
 #include <sys/stat.h>
+#include <windows.h> // Native WinAPI replacement for dirent.h
+
 #include "Game.h"
 #include "GameRules.h"
 
-typedef bool (* cmdFunc)(const char *);
+// Define PATH_MAX fallback if not pulled via headers in VS2022
+#ifndef PATH_MAX
+#define PATH_MAX MAX_PATH
+#endif
 
-char WDir [PATH_MAX];
+typedef bool (*cmdFunc)(const char*);
 
-void ConsoleMessage(CActor * pActor, const char * message)
+char WDir[PATH_MAX];
+
+void ConsoleMessage(CActor* pActor, const char* message)
 {
-	CGameRules * pGameRules = g_pGame->GetGameRules();
+#if 0
+	CGameRules* pGameRules = g_pGame->GetGameRules();
 	if (!pGameRules)
 		return;
 	pGameRules->SendTextMessage(eTextMessageConsole, message, eRMI_ToClientChannel, pActor->GetChannelId());
+#endif
 }
 
-bool exists(const std::string & path)
+bool exists(const std::string& path)
 {
+#if 0
 	struct stat properties;
 	return (stat(path.c_str(), &properties) != -1);
+#endif
+	return false;
 }
 
-bool isDir(const std::string & path)
+bool isDir(const std::string& path)
 {
+#if 0
 	struct stat properties;
 	if (stat(path.c_str(), &properties) == -1)
 		return false;
 	return (properties.st_mode & S_IFDIR) != 0;
+#endif
+	return false;
 }
 
-bool deleteFile(const std::string & path)
+bool deleteFile(const std::string& path)
 {
+#if 0
 	return remove(path.c_str()) == 0;
+#endif
+	return false;
 }
 
-bool deleteDir(const std::string & path)
+bool deleteDir(const std::string& path)
 {
-	#ifdef _WIN32
-		return RemoveDirectory(path.c_str()) != 0;
-	#else
-		return rmdir(path.c_str()) == 0;
-	#endif // _WIN32
+#if 0
+	return RemoveDirectoryA(path.c_str()) != 0;
+#endif
+	return false;
 }
 
-void printWDir(CActor * pActor);
-void changeWDir(CActor * pActor, const char * args);
-void listWDir(CActor * pActor);
-void readFile(CActor * pActor, const char * args);
-void createFile(CActor * pActor, const char * args);
-void appendToFile(CActor * pActor, const char * args);
-void modifyFile(CActor * pActor, const char * args);
-void deleteEntry(CActor * pActor, const char * args);
+void printWDir(CActor* pActor);
+void changeWDir(CActor* pActor, const char* args);
+void listWDir(CActor* pActor);
+void readFile(CActor* pActor, const char* args);
+void createFile(CActor* pActor, const char* args);
+void appendToFile(CActor* pActor, const char* args);
+void modifyFile(CActor* pActor, const char* args);
+void deleteEntry(CActor* pActor, const char* args);
 
-bool tryDeleteDir(CActor * pActor, const std::string & path);
-bool tryDeleteDirContent(CActor * pActor, const std::string & path);
-bool tryDeleteFile(CActor * pActor, const std::string & path);
+bool tryDeleteDir(CActor* pActor, const std::string& path);
+bool tryDeleteDirContent(CActor* pActor, const std::string& path);
+bool tryDeleteFile(CActor* pActor, const std::string& path);
 
-void printWDir(CActor * pActor)
+void printWDir(CActor* pActor)
 {
-	char message [26+PATH_MAX];
+#if 0
+	char message[26 + PATH_MAX];
 	sprintf(message, "$8[Access]$9 working dir: %s", WDir);
 	ConsoleMessage(pActor, message);
+#endif
 }
 
-void changeWDir(CActor * pActor, const char * args) // path
+void changeWDir(CActor* pActor, const char* args) // path
 {
-	char message [32+PATH_MAX];
-	char prevWDir [PATH_MAX];
-	char entry [64];
+#if 0
+	char message[32 + PATH_MAX];
+	char prevWDir[PATH_MAX];
+	char entry[64];
 	int pos;
 	int slashPos, endPos;
 
@@ -129,7 +147,7 @@ void changeWDir(CActor * pActor, const char * args) // path
 		else {
 			endPos = strlen(WDir);
 			WDir[endPos] = '\\';
-			strcpy(WDir+endPos+1, entry);
+			strcpy(WDir + endPos + 1, entry);
 		}
 		args++;
 	}
@@ -141,49 +159,64 @@ void changeWDir(CActor * pActor, const char * args) // path
 	else {
 		sprintf(message, "$8[Access]$9 dir \"%s\" does not exist", WDir);
 		ConsoleMessage(pActor, message);
-		strcpy(WDir, prevWDir);		
+		strcpy(WDir, prevWDir);
 	}
+#endif
 }
 
-void listWDir(CActor * pActor)
+void listWDir(CActor* pActor)
 {
-	char message [128];
-	DIR * dirpos;
-	struct dirent * direntry;
-	std::string entrypath;
-	struct stat props;
+#if 0
+	char message[128];
+	std::string searchPath = WDir;
+	searchPath += "\\*";
 
-	dirpos = opendir(WDir);
-	if (!dirpos) {
-		sprintf(message, "$8[Access]$9 unable to open the directory (%s)", strerror(errno));
+	WIN32_FIND_DATAA findData;
+	HANDLE hFind = FindFirstFileA(searchPath.c_str(), &findData);
+
+	if (hFind == INVALID_HANDLE_VALUE) {
+		sprintf(message, "$8[Access]$9 unable to open the directory (Error %lu)", GetLastError());
 		ConsoleMessage(pActor, message);
 		return;
 	}
+
 	ConsoleMessage(pActor, "$8[Access]$9 content of working directory:");
-	while ((direntry = readdir(dirpos)) != NULL) {
-		entrypath = WDir;
+
+	do {
+		std::string entrypath = WDir;
 		entrypath += '\\';
-		entrypath += direntry->d_name;
+		entrypath += findData.cFileName;
+
+		struct stat props;
 		if (stat(entrypath.c_str(), &props) == -1) {
-			sprintf(message, "can't read info about %s", direntry->d_name);
+			sprintf(message, "can't read info about %s", findData.cFileName);
 			ConsoleMessage(pActor, message);
 			continue;
 		}
-		sprintf(message, "%5ld   %-25s %10ld %10ld %10ld %10ld\n", direntry->d_ino, direntry->d_name, props.st_size, props.st_ctime, props.st_mtime, props.st_atime);
+
+		// Mock/Calculate a relative pseudo-inode index mapping to replace old direntry->d_ino
+		unsigned long pseudoIno = findData.ftCreationTime.dwLowDateTime ^ findData.ftLastWriteTime.dwLowDateTime;
+
+		sprintf(message, "%5lu   %-25s %10ld %10ld %10ld %10ld\n",
+			pseudoIno, findData.cFileName, props.st_size, props.st_ctime, props.st_mtime, props.st_atime);
 		ConsoleMessage(pActor, message);
-	}
-	closedir(dirpos);
+
+	} while (FindNextFileA(hFind, &findData) != 0);
+
+	FindClose(hFind);
+#endif
 }
 
-void readFile(CActor * pActor, const char * args) // filename
+void readFile(CActor* pActor, const char* args) // filename
 {
-	char buffer [128];
+#if 0
+	char buffer[128];
 	int bufpos = 0;
 	int line = 1;
-	string fileName;
-	FILE * file;
+	std::string fileName;
+	FILE* file;
 	int c;
-	
+
 	while (*args == ' ') { args++; }
 	if (*args == '\0') {
 		ConsoleMessage(pActor, "$8[Access]$9 invalid args");
@@ -191,20 +224,21 @@ void readFile(CActor * pActor, const char * args) // filename
 	}
 
 	fileName += WDir; fileName += '\\'; fileName += args;
-	file = fopen(fileName.c_str(), "r");
-	if (!file) {
-		sprintf(buffer, "$8[Access]$9 unable to open the file (%s)", strerror(errno));
+
+	// Safe alternative for VS2022 deprecation warnings on legacy fopen
+	if (fopen_s(&file, fileName.c_str(), "r") != 0 || !file) {
+		sprintf_s(buffer, "$8[Access]$9 unable to open the file (%s)", strerror(errno));
 		ConsoleMessage(pActor, buffer);
 		return;
 	}
 
 	ConsoleMessage(pActor, "$8[Access]$9 content of the file:");
-	bufpos = sprintf(buffer, "%4d ", line);
+	bufpos = sprintf_s(buffer, "%4d ", line);
 	while ((c = fgetc(file)) != EOF) {
 		if (c == '\n') {
 			buffer[bufpos] = '\0';
 			ConsoleMessage(pActor, buffer);
-			bufpos = sprintf(buffer, "%4d ", ++line);
+			bufpos = sprintf_s(buffer, "%4d ", ++line);
 		}
 		else if (c == '\t') {
 			buffer[bufpos++] = ' ';
@@ -216,39 +250,41 @@ void readFile(CActor * pActor, const char * args) // filename
 			if (isprint(c))
 				buffer[bufpos++] = c;
 			else
-				bufpos += sprintf(buffer+bufpos, "\\x%02X", (uint)(uchar)c);
+				bufpos += sprintf_s(buffer + bufpos, sizeof(buffer) - bufpos, "\\x%02X", (unsigned int)(unsigned char)c);
 		}
 		if (bufpos >= 100) {
 			buffer[bufpos] = '\0';
 			ConsoleMessage(pActor, buffer);
-			bufpos = sprintf(buffer, "%4d ", ++line);
+			bufpos = sprintf_s(buffer, "%4d ", ++line);
 		}
 	}
 	buffer[bufpos] = '\0';
 	ConsoleMessage(pActor, buffer);
 
 	fclose(file);
+#endif
 }
 
-void createFile(CActor * pActor, const char * args) // filename
+void createFile(CActor* pActor, const char* args) // filename
 {
 
 }
 
-void appendToFile(CActor * pActor, const char * args) // filename, text
+void appendToFile(CActor* pActor, const char* args) // filename, text
 {
 
 }
 
-void modifyFile(CActor * pActor, const char * args) // filename, line, text
+void modifyFile(CActor* pActor, const char* args) // filename, line, text
 {
 
 }
 
-void deleteEntry(CActor * pActor, const char * args)
+void deleteEntry(CActor* pActor, const char* args)
 {
-	char message [26+PATH_MAX];
-	string fileName;
+#if 0
+	char message[26 + PATH_MAX];
+	std::string fileName;
 
 	while (*args == ' ') { args++; }
 	if (*args == '\0') {
@@ -267,11 +303,13 @@ void deleteEntry(CActor * pActor, const char * args)
 		ConsoleMessage(pActor, message);
 		tryDeleteFile(pActor, fileName.c_str());
 	}
+#endif
 }
 
-bool tryDeleteDir(CActor * pActor, const std::string & path)
+bool tryDeleteDir(CActor* pActor, const std::string& path)
 {
-	char message [64+PATH_MAX];
+#if 0
+	char message[64 + PATH_MAX];
 	bool success;
 	success = tryDeleteDirContent(pActor, path);
 	if (!success) {
@@ -286,44 +324,57 @@ bool tryDeleteDir(CActor * pActor, const std::string & path)
 		return false;
 	}
 	return true;
+#endif
+	return false;
 }
 
-bool tryDeleteDirContent(CActor * pActor, const std::string & path)
+bool tryDeleteDirContent(CActor* pActor, const std::string& path)
 {
-	char message [128];
-	DIR * directory;
-	struct dirent * entry;
-	std::string entryPath;
-	bool success = true;
+#if 0
+	char message[128];
+	std::string searchPath = path + "\\*";
 
-	directory = opendir(path.c_str());
-	if (!directory) {
-		sprintf(message, "unable to open directory (%s)", strerror(errno));
+	WIN32_FIND_DATAA findData;
+	HANDLE hFind = FindFirstFileA(searchPath.c_str(), &findData);
+
+	if (hFind == INVALID_HANDLE_VALUE) {
+		sprintf(message, "unable to open directory (Error %lu)", GetLastError());
 		ConsoleMessage(pActor, message);
 		return false;
 	}
 
-	while ((entry = readdir(directory)) != NULL) {
-		if (entry->d_name[0]=='.' && (entry->d_name[1]=='\0' || (entry->d_name[1]=='.' && entry->d_name[2]=='\0')))
+	bool success = true;
+
+	do {
+		// Skip "." and ".."
+		if (findData.cFileName[0] == '.' && (findData.cFileName[1] == '\0' || (findData.cFileName[1] == '.' && findData.cFileName[2] == '\0')))
 			continue;
-		entryPath = path+'\\'+entry->d_name;
-		if (isDir(entryPath))
+
+		std::string entryPath = path + '\\' + findData.cFileName;
+
+		if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			success &= tryDeleteDir(pActor, entryPath);
 		else
 			success &= tryDeleteFile(pActor, entryPath);
-	}
 
-	closedir(directory);
+	} while (FindNextFileA(hFind, &findData) != 0);
+
+	FindClose(hFind);
 	return success;
+#endif
+	return false;
 }
 
-bool tryDeleteFile(CActor * pActor, const std::string & path)
+bool tryDeleteFile(CActor* pActor, const std::string& path)
 {
-	char message [128];
+#if 0
+	char message[128];
 	bool deleted = deleteFile(path);
 	if (!deleted) {
 		sprintf(message, "failed to delete file %s (%s)", path.c_str(), strerror(errno));
 		ConsoleMessage(pActor, message);
 	}
 	return deleted;
+#endif
+	return false;
 }

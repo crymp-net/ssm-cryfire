@@ -2,19 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Interfaces_h">
-      <UniqueIdentifier>{3b8cd885-fb2f-430f-a668-09a2902bae94}</UniqueIdentifier>
+      <UniqueIdentifier>{f699493e-a58e-4c3c-b405-f8b39037ad74}</UniqueIdentifier>
     </Filter>
     <Filter Include="Common_h">
-      <UniqueIdentifier>{504c1def-16f7-4866-88dc-bf9a4e94cca5}</UniqueIdentifier>
+      <UniqueIdentifier>{0d10966e-af47-4ad0-b39c-9ed2fd88a22d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Common_h\RenderElements">
-      <UniqueIdentifier>{afe0d58a-7269-4514-b55d-a2614e2d9c91}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MathLib">
-      <UniqueIdentifier>{ce3beaaa-2641-42c5-b040-ff16a6196deb}</UniqueIdentifier>
+      <UniqueIdentifier>{6e6f3989-9e31-47f3-bd8b-1c3b597e81e9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Platform_h">
-      <UniqueIdentifier>{d90794d1-ca22-4439-99e3-9d2de49e6a69}</UniqueIdentifier>
+      <UniqueIdentifier>{a9b45c1f-ff62-4756-9f1c-bd6ebd9e3d3d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -509,51 +506,6 @@
     </ClInclude>
     <ClInclude Include="RendElement.h">
       <Filter>Common_h\RenderElements</Filter>
-    </ClInclude>
-    <ClInclude Include="AABBSV.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Camera.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Color.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Geo.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_GeoDistance.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_GeoIntersect.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_GeoOverlap.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Math.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Matrix.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Quat.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_ValidNumber.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Vector2.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_Vector3.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="Cry_XOptimise.h">
-      <Filter>MathLib</Filter>
-    </ClInclude>
-    <ClInclude Include="GeomQuery.h">
-      <Filter>MathLib</Filter>
     </ClInclude>
     <ClInclude Include="CryAssert_impl.h">
       <Filter>Platform_h</Filter>

@@ -145,7 +145,6 @@ gDisconnectErrors[] = {	{eDC_Unknown,"@ui_menu_disconnect_Generic"},
 											};
 
 CMPHub::CMPHub():
-m_menu(0),
 m_currentScreen(0),
 m_currentStartScreen(0),
 m_currentIngameScreen(0),

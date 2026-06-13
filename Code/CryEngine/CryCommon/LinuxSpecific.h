@@ -45,20 +45,6 @@ typedef char CHAR;
 #define IN
 #define OUT
 
-//#if !defined(_LIB)
-//# define _LIB 1
-//#endif
-
-#ifdef _LIB
-#if !defined(USE_STATIC_NAME_TABLE)
-#define USE_STATIC_NAME_TABLE 1
-#endif
-#endif
-
-#if !defined(_STLP_HASH_MAP)
-#define _STLP_HASH_MAP 1
-#endif
-
 // Enable memory address tracing code.
 #if !defined(MM_TRACE_ADDRS) // && !defined(NDEBUG) 
 #define MM_TRACE_ADDRS 1
@@ -350,7 +336,7 @@ typedef struct _SECURITY_ATTRIBUTES
 	}
 
 
-	typedef enum {INVALID_HANDLE_VALUE = -1l}INVALID_HANDLE_VALUE_ENUM;
+	enum INVALID_HANDLE_VALUE_ENUM { INVALID_HANDLE_VALUE = -1l };
 	//for compatibility reason we got to create a class which actually contains an int rather than a void* and make sure it does not get mistreated
 	template <class T, T U>//U is default type for invalid handle value, T the encapsulated handle type to be used instead of void* (as under windows and never linux)
 	class CHandle
